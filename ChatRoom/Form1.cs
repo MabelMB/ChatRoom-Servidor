@@ -5,6 +5,7 @@ using System.Drawing.Drawing2D;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace ChatRoom
@@ -14,57 +15,84 @@ namespace ChatRoom
         //DECLARACION DE VARIABLES EXTRA -----------------------------------------------------------
         Form f = null;
         private string connection = "server=127.0.0.1;uid=root;pwd=root;database=ChatRoom";
+        private ServerSocket server;
+        private STARTMENU formPrincipal;
+
+
 
         public STARTMENU()
         {
             InitializeComponent();
             this.DoubleBuffered = true;
-            Server();
+            ServerSocket servidor = new ServerSocket(this);
+            Task.Run(() => servidor.RecibirMensaje());
+
         }
 
-        public static void Server()
+        public class ServerSocket
         {
-            IPAddress ipAddress = IPAddress.Parse("127.0.0.1");
-            IPEndPoint localEndPoint = new IPEndPoint(ipAddress, 11200);
+            private Socket listener;
+            private STARTMENU _formPrincipal;
 
-            try
+            public ServerSocket(STARTMENU formPrincipal)
             {
-                using (Socket listener = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp))
+                _formPrincipal = formPrincipal;
+            }
+
+            public void RecibirMensaje()
+            {
+                IPAddress ipAddress = IPAddress.Parse("127.0.0.1");
+                IPEndPoint localEndPoint = new IPEndPoint(ipAddress, 11200);
+
+                try
                 {
-                    // Configurar servidor
-                    listener.Bind(localEndPoint);
-                    listener.Listen(10);
-
-                    MessageBox.Show("Servidor iniciado. Esperando conexiones...");
-                    Socket handler = listener.Accept();
-                    MessageBox.Show("Cliente conectado!");
-
-                    while (true)
+                    using (listener = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp))
                     {
-                        string data = null;
-                        byte[] bytes = null;
+                        listener.Bind(localEndPoint);
+                        listener.Listen(10);
+
+                        MessageBox.Show("Servidor iniciado. Esperando conexiones...");
+                        Socket handler = listener.Accept();
+                        MessageBox.Show("Cliente conectado!");
 
                         while (true)
                         {
-                            bytes = new byte[1024];
-                            int bytesRec = handler.Receive(bytes);
-                            data = Encoding.UTF8.GetString(bytes, 0, bytesRec);
+                            string data = "";
+                            byte[] bytes = new byte[1024];
 
-                            if (data.IndexOf("<EOF>") > -1)
-                                break;
+                            // RECIBIR mensaje
+                            while (true)
+                            {
+                                int bytesRec = handler.Receive(bytes);
+                                data += Encoding.UTF8.GetString(bytes, 0, bytesRec);
+                                if (data.Contains("<EOF>")) break;
+                            }
+
+                            // PROCESAR según el tipo de evento
+                            if (data.Contains("LOGIN|"))
+                            {
+                                string mensajeLimpio = data.Replace("<EOF>", "");
+                                string[] partes = mensajeLimpio.Split('|');
+                                string usuario = partes[1];
+                                string password = partes[2];
+
+                                bool esValido = _formPrincipal.validarUsuario(usuario, password);
+
+                                string respuesta = esValido ?
+                                    "LOGIN_EXITOSO|Bienvenido" :
+                                    "LOGIN_ERROR|Credenciales incorrectas";
+
+                                handler.Send(Encoding.UTF8.GetBytes(respuesta + "<EOF>"));
+                            }
+
+                            MessageBox.Show($"Mensaje recibido: {data.Replace("<EOF>", "")}");
                         }
-
-                        string mensajeLimpio = data.Replace("<EOF>", "");
-                        MessageBox.Show($"Mensaje recibido: {mensajeLimpio}");
-
-                        byte[] msg = Encoding.UTF8.GetBytes(mensajeLimpio);
-                        handler.Send(msg);
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error en servidor: {ex.Message}");
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error en servidor: {ex.Message}");
+                }
             }
         }
 
@@ -167,53 +195,33 @@ namespace ChatRoom
         //iniciar sesion
         private void loginuserbutton_Click(object sender, EventArgs e)
         {
-            if (userlogin.Text == "123" && passwordlogin.Text == "123")
-            {
-                Form2 f = new Form2(this, 12345, "null");
-                f.Show();
-                this.Hide();
-                return;
-            }
-            
+ 
+        }
 
-            
-            //Validación del usuario y su contraseña
-            if (string.IsNullOrEmpty(userlogin.Text) || userlogin.Text == "Usuario" ||
-                string.IsNullOrEmpty(passwordlogin.Text) || passwordlogin.Text == "Contraseña")
-            {
-                MessageBox.Show("Ingresa un usuario y contraseña");
-                return;
-            }
-
+        private bool validarUsuario(string usuario, string pass)
+        {
             MySqlConnection conn = new MySqlConnection(connection);
             conn.Open();
             MySqlCommand cmd = new MySqlCommand("SELECT * FROM usuarios WHERE nombre_usuario = @user AND contraseña = @pass", conn);
-            cmd.Parameters.AddWithValue("@user", userlogin.Text);
-            cmd.Parameters.AddWithValue("@pass", Crypto.Encrypt(passwordlogin.Text));
+            cmd.Parameters.AddWithValue("@user", usuario);
+            cmd.Parameters.AddWithValue("@pass", Crypto.Encrypt(pass));
 
             MySqlDataReader reader = cmd.ExecuteReader();
             if (reader.Read())
             {
                 int usuarioId = reader.GetInt32("id_usuario");
                 string nombreUsuario = reader.GetString("nombre_usuario");
-                Form2 f = new Form2(this, usuarioId, nombreUsuario);
-                f.Show();
-                this.Hide();
+                //Form2 f = new Form2(this, usuarioId, nombreUsuario);
+                //f.Show();
+                //this.Hide();
             }
             else
             {
                 MessageBox.Show("Usuario o contraseña incorrectos");
+                return false;
             }
 
-            
-
-            userlogin.Text = "Usuario";
-            userlogin.ForeColor = Color.Gray;
-            passwordlogin.Text = "Contraseña";
-            passwordlogin.ForeColor = Color.Gray;
-            passwordlogin.UseSystemPasswordChar = false;
-            passwordlogin.PasswordChar = '\0';
-            
+            return true;
         }
         //volver al menu principal
         private void loginBackButton_Click(object sender, EventArgs e)

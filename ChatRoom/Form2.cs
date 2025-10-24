@@ -27,22 +27,27 @@ namespace ChatRoom
         int currentsalaid;
 
         //CONSTRUCTOR -----------------------------------------------------------
-        public Form2(STARTMENU mainForm, int userId, string userName)
+        //public Form2(STARTMENU mainForm, int userId, string userName)
+        //{
+        //    InitializeComponent();
+        //    //gradient
+        //    this.DoubleBuffered = true;
+        //    //form management
+        //    _mainForm = mainForm;
+        //    //user data load
+        //    if (userName != "null")
+        //    {
+        //        MuestraUsuario(userId, userName);
+        //        MuestraGrupos(userId);
+        //        userid = userId;
+        //    }
+        //}
+
+        public Form2()
         {
             InitializeComponent();
-            //gradient
-            this.DoubleBuffered = true;
-            //form management
-            _mainForm = mainForm;
-            //user data load
-            if (userName != "null")
-            {
-                MuestraUsuario(userId, userName);
-                MuestraGrupos(userId);
-                userid = userId;
-            }
+            MessageBox.Show("Form2 cargado (modo prueba) - Funcionalidad desactivada");
         }
-
 
 
         //DISEÑO -----------------------------------------------------------
