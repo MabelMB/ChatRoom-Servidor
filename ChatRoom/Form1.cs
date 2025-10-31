@@ -84,6 +84,21 @@ namespace ChatRoom
 
                                 handler.Send(Encoding.UTF8.GetBytes(respuesta + "<EOF>"));
                             }
+                            else if (data.Contains("REGISTER|"))
+                            {
+                                string mensajeLimpio = data.Replace("<EOF>", "");
+                                string[] partes = mensajeLimpio.Split('|');
+                                string usuario = partes[1];
+                                string password = partes[2];
+
+                                bool exito = _formPrincipal.registrarUsuario(usuario, password);
+                                string respuesta = exito ?
+                                    "REGISTER_EXITOSO|Usuario creado correctamente" :
+                                    "REGISTER_ERROR|El usuario ya existe o hubo un problema";
+
+                                handler.Send(Encoding.UTF8.GetBytes(respuesta + "<EOF>"));
+                            }
+
 
                             MessageBox.Show($"Mensaje recibido: {data.Replace("<EOF>", "")}");
                         }
@@ -95,6 +110,42 @@ namespace ChatRoom
                 }
             }
         }
+
+        private bool registrarUsuario(string usuario, string pass)
+        {
+            try
+            {
+                using (MySqlConnection conn = new MySqlConnection(connection))
+                {
+                    conn.Open();
+
+                    // Verificar si ya existe el usuario
+                    MySqlCommand verificacion = new MySqlCommand(
+                        "SELECT COUNT(*) FROM usuarios WHERE nombre_usuario = @us", conn);
+                    verificacion.Parameters.AddWithValue("@us", usuario);
+                    int count = Convert.ToInt32(verificacion.ExecuteScalar());
+
+                    if (count > 0)
+                        return false; // Usuario ya existe
+
+                    // Insertar nuevo usuario
+                    MySqlCommand cmd = new MySqlCommand(
+                        "INSERT INTO usuarios (nombre_usuario, contraseña) VALUES (@user, @pass)", conn);
+                    cmd.Parameters.AddWithValue("@user", usuario);
+                    cmd.Parameters.AddWithValue("@pass", Crypto.Encrypt(pass));
+
+                    int filas = cmd.ExecuteNonQuery();
+                    return filas > 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al registrar usuario: {ex.Message}");
+                return false;
+            }
+        }
+
+
 
         //DISEÑO -----------------------------------------------------------
         protected override void OnPaint(PaintEventArgs e)
