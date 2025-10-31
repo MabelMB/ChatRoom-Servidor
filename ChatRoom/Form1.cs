@@ -17,6 +17,7 @@ namespace ChatRoom
         private string connection = "server=127.0.0.1;uid=root;pwd=root;database=ChatRoom";
         private ServerSocket server;
         private STARTMENU formPrincipal;
+        int UsuarioId;
 
 
 
@@ -75,6 +76,7 @@ namespace ChatRoom
                                 string[] partes = mensajeLimpio.Split('|');
                                 string usuario = partes[1];
                                 string password = partes[2];
+                                int id = _formPrincipal.UsuarioId;
 
                                 bool esValido = _formPrincipal.validarUsuario(usuario, password);
 
@@ -82,7 +84,7 @@ namespace ChatRoom
                                     "LOGIN_EXITOSO|Bienvenido" :
                                     "LOGIN_ERROR|Credenciales incorrectas";
 
-                                handler.Send(Encoding.UTF8.GetBytes(respuesta + "<EOF>"));
+                                handler.Send(Encoding.UTF8.GetBytes(respuesta + "|" + usuario + "|" + id + "<EOF>"));
                             }
                             else if (data.Contains("REGISTER|"))
                             {
@@ -260,8 +262,9 @@ namespace ChatRoom
             MySqlDataReader reader = cmd.ExecuteReader();
             if (reader.Read())
             {
-                int usuarioId = reader.GetInt32("id_usuario");
+                UsuarioId = reader.GetInt32("id_usuario");
                 string nombreUsuario = reader.GetString("nombre_usuario");
+                //string nombreUsuario = reader.GetString("nombre_usuario");
                 //Form2 f = new Form2(this, usuarioId, nombreUsuario);
                 //f.Show();
                 //this.Hide();
