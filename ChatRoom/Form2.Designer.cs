@@ -417,7 +417,7 @@
             this.creategroup.TabIndex = 9;
             this.creategroup.Text = "Crear grupo";
             this.creategroup.UseVisualStyleBackColor = true;
-            this.creategroup.Click += new System.EventHandler(this.creategroup_Click);
+            //this.creategroup.Click += new System.EventHandler(this.creategroup_Click);
             // 
             // creategrouptitle
             // 

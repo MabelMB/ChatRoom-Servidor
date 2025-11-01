@@ -1,12 +1,15 @@
 ﻿using MySql.Data.MySqlClient;
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.Remoting.Messaging;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace ChatRoom
 {
@@ -18,8 +21,6 @@ namespace ChatRoom
         private ServerSocket server;
         private STARTMENU formPrincipal;
         int UsuarioId;
-
-
 
         public STARTMENU()
         {
@@ -76,15 +77,23 @@ namespace ChatRoom
                                 string[] partes = mensajeLimpio.Split('|');
                                 string usuario = partes[1];
                                 string password = partes[2];
-                                int id = _formPrincipal.UsuarioId;
-
                                 bool esValido = _formPrincipal.validarUsuario(usuario, password);
+                                int userid = _formPrincipal.UsuarioId;
 
-                                string respuesta = esValido ?
-                                    "LOGIN_EXITOSO|Bienvenido" :
-                                    "LOGIN_ERROR|Credenciales incorrectas";
+                                if (esValido && userid > 0)
+                                {
+                                    string gruposData = _formPrincipal.ObtenerInformacionGrupo(userid);
+                                    string mensajesRecientes = _formPrincipal.ObtenerMensajesRecientes(userid);
 
-                                handler.Send(Encoding.UTF8.GetBytes(respuesta + "|" + usuario + "|" + id + "<EOF>"));
+                                    string respuesta = $"LOGIN_EXITOSO|{usuario}|{userid}|{gruposData}|{mensajesRecientes}";
+                                    handler.Send(Encoding.UTF8.GetBytes(respuesta + "<EOF>"));
+                                }
+                                else
+                                {
+                                    string respuesta = "LOGIN_ERROR|Credenciales incorrectas";
+                                    handler.Send(Encoding.UTF8.GetBytes(respuesta + "<EOF>"));
+                                }
+
                             }
                             else if (data.Contains("REGISTER|"))
                             {
@@ -92,17 +101,32 @@ namespace ChatRoom
                                 string[] partes = mensajeLimpio.Split('|');
                                 string usuario = partes[1];
                                 string password = partes[2];
+                                int id = _formPrincipal.UsuarioId;
 
                                 bool exito = _formPrincipal.registrarUsuario(usuario, password);
                                 string respuesta = exito ?
-                                    "REGISTER_EXITOSO|Usuario creado correctamente" :
-                                    "REGISTER_ERROR|El usuario ya existe o hubo un problema";
+                                    "LOGIN_EXITOSO|Bienvenido" :
+                                    "LOGIN_ERROR|Credenciales incorrectas";
+                                handler.Send(Encoding.UTF8.GetBytes(respuesta + "|" + usuario + "|" + id + "<EOF>"));
+                            }
 
-                                handler.Send(Encoding.UTF8.GetBytes(respuesta + "<EOF>"));
+                            //no necesitabamos el evento para el historial lol podemos reutilizar esto
+                            else if (data.Contains("RECENTS|"))
+                            {
+                                string mensajeLimpio = data.Replace("<EOF>", "");
+                                string[] partes = mensajeLimpio.Split('|');
+                                string usuario = partes[1];
+                                int userid = int.Parse(partes[2]);
+                                string nombreGrupo = partes[3];
+                                string descripcion = partes[4];
+                                string usuariosTexto = partes[5];
+
+                                bool exito = _formPrincipal.Crear_grupo(usuario, userid, nombreGrupo, descripcion, usuariosTexto);
+                                //esto es una mezcla de cosas, no es nada :p
                             }
 
 
-                            MessageBox.Show($"Mensaje recibido: {data.Replace("<EOF>", "")}");
+                                //MessageBox.Show($"Mensaje recibido: {data.Replace("<EOF>", "")}");
                         }
                     }
                 }
@@ -147,6 +171,217 @@ namespace ChatRoom
             }
         }
 
+        private bool validarUsuario(string usuario, string pass)
+        {
+            try
+            {
+                using (MySqlConnection conn = new MySqlConnection(connection))
+                {
+                    conn.Open();
+                    MySqlCommand cmd = new MySqlCommand("SELECT * FROM usuarios WHERE nombre_usuario = @user AND contraseña = @pass", conn);
+                    cmd.Parameters.AddWithValue("@user", usuario);
+                    cmd.Parameters.AddWithValue("@pass", Crypto.Encrypt(pass));
+
+                    MySqlDataReader reader = cmd.ExecuteReader();
+                    if (reader.Read())
+                    {
+                        UsuarioId = reader.GetInt32("id_usuario");
+                        reader.Close();
+                        return true;
+                    }
+                    else
+                    {
+                        reader.Close();
+                        return false;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error validando usuario: {ex.Message}");
+                return false;
+            }
+        }
+
+
+        private bool Crear_grupo(string username, int userid, string nombreGrupo, string descripcionGrupo, string usuariosTexto)
+        {
+            try
+            {
+                int id;
+                using (MySqlConnection conn = new MySqlConnection(connection))
+                {
+                    conn.Open();
+                    string query = "INSERT INTO salas (nombre_sala, descripcion, id_creador) VALUES (@nombre, @descripcion, @id_creador)";
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@nombre", nombreGrupo);
+                        cmd.Parameters.AddWithValue("@descripcion", descripcionGrupo);
+                        cmd.Parameters.AddWithValue("@id_creador", userid);
+                        cmd.ExecuteNonQuery();
+                        id = (int)cmd.LastInsertedId;
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(usuariosTexto))
+                {
+                    string[] usuarios = usuariosTexto.Split(',');
+                    foreach (string usuario in usuarios)
+                    {
+                        string usuarioLimpio = usuario.Trim();
+                        if (!string.IsNullOrWhiteSpace(usuarioLimpio))
+                        {
+                            agregaMiembroLista(usuarioLimpio, id, "miembro");
+                        }
+                    }
+                }
+
+                agregaMiembro(userid, id, "admin");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al crear el grupo: " + ex.Message);
+                return false;
+            }
+        }
+
+        private string ObtenerInformacionGrupo(int userid)
+        {
+            try
+            {
+                using (MySqlConnection conn = new MySqlConnection(connection))
+                {
+                    conn.Open();
+                    MySqlCommand cmd = new MySqlCommand(@"
+                SELECT s.id_sala, s.nombre_sala, s.descripcion, 
+                       CASE 
+                           WHEN s.id_creador = @id THEN 'admin'
+                           ELSE COALESCE(ms.rol, 'miembro') 
+                       END as rol
+                FROM salas s 
+                LEFT JOIN miembros_sala ms ON s.id_sala = ms.id_sala AND ms.id_usuario = @id
+                WHERE s.id_creador = @id 
+                   OR s.id_sala IN (SELECT id_sala FROM miembros_sala WHERE id_usuario = @id)", conn);
+                    cmd.Parameters.AddWithValue("@id", userid);
+
+                    MySqlDataReader reader = cmd.ExecuteReader();
+                    List<string> grupos = new List<string>();
+
+                    while (reader.Read())
+                    {
+                        string grupo = $"{reader.GetInt32("id_sala")}:{reader.GetString("nombre_sala")}:{reader.GetString("descripcion")}:{reader.GetString("rol")}";
+                        grupos.Add(grupo);
+                    }
+                    reader.Close();
+
+                    return string.Join(";", grupos);
+                    // Formato: "1:Amigos:Grupo de amigos:admin;2:Trabajo:Grupo del trabajo:miembro"
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error obteniendo grupos: {ex.Message}");
+                return "";
+            }
+
+        }
+
+        public string ObtenerMensajesRecientes(int userId)
+        {
+            try
+            {
+                using (MySqlConnection conn = new MySqlConnection(connection))
+                {
+                    conn.Open();
+                    MySqlCommand cmd = new MySqlCommand(@"
+                SELECT m.id_sala, u.nombre_usuario, m.mensajes, m.fecha_envio
+                FROM mensajes m
+                INNER JOIN usuarios u ON m.id_usuario = u.id_usuario
+                WHERE m.id_sala IN (SELECT id_sala FROM miembros_sala WHERE id_usuario = @id)
+                ORDER BY m.fecha_envio DESC LIMIT 10", conn);
+                    cmd.Parameters.AddWithValue("@id", userId);
+
+                    MySqlDataReader reader = cmd.ExecuteReader();
+                    List<string> mensajes = new List<string>();
+
+                    while (reader.Read())
+                    {
+                        string mensaje = $"{reader.GetInt32("id_sala")}:{reader.GetString("nombre_usuario")}:{reader.GetString("mensajes")}:{reader.GetDateTime("fecha_envio")}";
+                        mensajes.Add(mensaje);
+                    }
+                    reader.Close();
+
+                    return string.Join(";", mensajes); // Formato: "1:ana:Hola!:2024-01-01;2:pedro:Reunión mañana:2024-01-01"
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error obteniendo mensajes: {ex.Message}");
+                return "";
+            }
+        }
+
+        private void agregaMiembro(int userid, int salaid, string rol)
+        {
+            MySqlConnection conn = new MySqlConnection(connection);
+            conn.Open();
+
+            MySqlCommand verificar = new MySqlCommand("SELECT COUNT(*) FROM miembros_sala WHERE id_usuario = @us AND id_sala = @sala", conn);
+            verificar.Parameters.AddWithValue("@us", userid);
+            verificar.Parameters.AddWithValue("@sala", salaid);
+
+            int existe = Convert.ToInt32(verificar.ExecuteScalar());
+
+
+            if (existe == 0)
+            {
+                MySqlCommand cmd = new MySqlCommand("INSERT INTO miembros_sala (id_usuario, id_sala, rol) VALUES (@us, @sala, @rol)", conn);
+                cmd.Parameters.AddWithValue("@us", userid);
+                cmd.Parameters.AddWithValue("@sala", salaid);
+                cmd.Parameters.AddWithValue("@rol", rol);
+
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        private void agregaMiembroLista(string user, int salaid, string rol)
+        {
+            try
+            {
+                using (MySqlConnection conn = new MySqlConnection(connection))
+                {
+                    conn.Open();
+
+                    MySqlCommand obtenerIdCmd = new MySqlCommand("SELECT id_usuario FROM usuarios WHERE nombre_usuario = @nombre", conn);
+                    obtenerIdCmd.Parameters.AddWithValue("@nombre", user);
+
+                    object resultado = obtenerIdCmd.ExecuteScalar();
+                    if (resultado != null)
+                    {
+                        int userId = Convert.ToInt32(resultado);
+
+                        MySqlCommand cmd = new MySqlCommand("INSERT INTO miembros_sala (id_usuario, id_sala, rol) VALUES (@us, @sala, @rol)", conn);
+                        cmd.Parameters.AddWithValue("@us", userId);
+                        cmd.Parameters.AddWithValue("@sala", salaid);
+                        cmd.Parameters.AddWithValue("@rol", rol);
+
+                        cmd.ExecuteNonQuery();
+                        MessageBox.Show("El usuario se agregó con éxito");
+                    }
+                    else
+                    {
+                        MessageBox.Show("El usuario no existe");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Si falla, simplemente continuamos
+                Console.WriteLine($"Error al agregar {user}: {ex.Message}");
+            }
+        }
+
 
 
         //DISEÑO -----------------------------------------------------------
@@ -161,7 +396,7 @@ namespace ChatRoom
             {
                 ColorBlend blend = new ColorBlend();
 
-                // 👇 Must start at 0.0 and end at 1.0
+                // Must start at 0.0 and end at 1.0
                 blend.Positions = new float[] { 0.0f, 0.11f, 0.29f, 0.56f, 1.0f };
                 blend.Colors = new Color[]
                 {
@@ -186,36 +421,6 @@ namespace ChatRoom
             loginmenulayout.Visible = false;
             registermenulayout.Visible = false;
 
-        }
-
-        private void ConfigurarBotonRedondo(Button boton, int radio)
-        {
-            boton.Paint += new PaintEventHandler(Boton_Paint);
-            boton.Tag = radio;
-        }
-
-        //Aplicar el dibujo a un botón
-        private void Boton_Paint(object sender, PaintEventArgs e)
-        {
-            Button botonActual = (Button)sender;
-            int radio = (int)botonActual.Tag;
-            e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-            System.Drawing.Drawing2D.GraphicsPath path = CrearPathRedondeado(botonActual.Width, botonActual.Height, radio);
-            botonActual.Region = new System.Drawing.Region(path);
-        }
-
-        //Diseñar y dibujar el redondeado
-        private System.Drawing.Drawing2D.GraphicsPath CrearPathRedondeado(int ancho, int alto, int radio)
-        {
-            System.Drawing.Drawing2D.GraphicsPath path = new System.Drawing.Drawing2D.GraphicsPath();
-
-            path.AddArc(0, 0, radio, radio, 180, 90);
-            path.AddArc(ancho - radio, 0, radio, radio, 270, 90);
-            path.AddArc(ancho - radio, alto - radio, radio, radio, 0, 90);
-            path.AddArc(0, alto - radio, radio, radio, 90, 90);
-            path.CloseFigure();
-
-            return path;
         }
 
         private void tableLayoutPanel1_Paint(object sender, PaintEventArgs e)
@@ -251,32 +456,8 @@ namespace ChatRoom
  
         }
 
-        private bool validarUsuario(string usuario, string pass)
-        {
-            MySqlConnection conn = new MySqlConnection(connection);
-            conn.Open();
-            MySqlCommand cmd = new MySqlCommand("SELECT * FROM usuarios WHERE nombre_usuario = @user AND contraseña = @pass", conn);
-            cmd.Parameters.AddWithValue("@user", usuario);
-            cmd.Parameters.AddWithValue("@pass", Crypto.Encrypt(pass));
 
-            MySqlDataReader reader = cmd.ExecuteReader();
-            if (reader.Read())
-            {
-                UsuarioId = reader.GetInt32("id_usuario");
-                string nombreUsuario = reader.GetString("nombre_usuario");
-                //string nombreUsuario = reader.GetString("nombre_usuario");
-                //Form2 f = new Form2(this, usuarioId, nombreUsuario);
-                //f.Show();
-                //this.Hide();
-            }
-            else
-            {
-                MessageBox.Show("Usuario o contraseña incorrectos");
-                return false;
-            }
 
-            return true;
-        }
         //volver al menu principal
         private void loginBackButton_Click(object sender, EventArgs e)
         {

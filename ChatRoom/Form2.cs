@@ -132,67 +132,7 @@ namespace ChatRoom
             groupconfigpanel.Visible = false;
             creategrouppanel.Visible = false;
         }
-        private void creategroup_Click(object sender, EventArgs e)
-        {
-            chatLayout.Visible = true;
-            chooseagroup.Visible = false;
-            groupconfigpanel.Visible = false;
-            chatLayout.BringToFront();
-            creategrouppanel.Visible = false;
 
-            if (groupnametextbox.Text == "" && groupdesctextbox.Text == "")
-            {
-                AddNewGroup("test", "test", 123, false);
-                return;
-            }
-
-            try
-            {
-                string nombreGrupo = groupnametextbox.Text;
-                string descripcionGrupo = groupdesctextbox.Text;
-
-                int id;
-
-                using (MySqlConnection conn = new MySqlConnection(connection))
-                {
-                    conn.Open();
-                    string query = "INSERT INTO salas (nombre_sala, descripcion, id_creador) VALUES (@nombre, @descripcion, @id_creador)";
-                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@nombre", nombreGrupo);
-                        cmd.Parameters.AddWithValue("@descripcion", descripcionGrupo);
-                        cmd.Parameters.AddWithValue("@id_creador", userid);
-                        cmd.ExecuteNonQuery();
-                        // Obtener el ultimo ID insertado
-                        id = (int)cmd.LastInsertedId;
-                    }
-
-                }
-
-                if (!string.IsNullOrWhiteSpace(textBox1.Text))
-                {
-                    string[] usuarios = textBox1.Text.Split(',');
-                    foreach (string usuario in usuarios)
-                    {
-                        string usuarioLimpio = usuario.Trim();
-                        if (!string.IsNullOrWhiteSpace(usuarioLimpio))
-                        {
-                            agregaMiembroLista(usuarioLimpio, id, "miembro");
-                        }
-                    }
-                    currentsalaid = id;
-                    agregaMiembro(userid, id, "admin");
-                    AddNewGroup(groupnametextbox.Text, groupdesctextbox.Text, id, true);
-
-
-
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error al crear el grupo: " + ex.Message);
-            }
-        }
 
         //EVENTOS TEXTBOX -----------------------------------------------------------
         private void usernamelabel_Click_2(object sender, EventArgs e)
