@@ -54,79 +54,15 @@ namespace ChatRoom
                         listener.Listen(10);
 
                         MessageBox.Show("Servidor iniciado. Esperando conexiones...");
-                        Socket handler = listener.Accept();
-                        MessageBox.Show("Cliente conectado!");
 
                         while (true)
                         {
-                            string data = "";
-                            byte[] bytes = new byte[1024];
+                            // ✅ Aceptar nueva conexión para cada cliente
+                            Socket handler = listener.Accept();
+                            //MessageBox.Show("Cliente conectado!");
 
-                            // RECIBIR mensaje
-                            while (true)
-                            {
-                                int bytesRec = handler.Receive(bytes);
-                                data += Encoding.UTF8.GetString(bytes, 0, bytesRec);
-                                if (data.Contains("<EOF>")) break;
-                            }
-
-                            // PROCESAR según el tipo de evento
-                            if (data.Contains("LOGIN|"))
-                            {
-                                string mensajeLimpio = data.Replace("<EOF>", "");
-                                string[] partes = mensajeLimpio.Split('|');
-                                string usuario = partes[1];
-                                string password = partes[2];
-                                bool esValido = _formPrincipal.validarUsuario(usuario, password);
-                                int userid = _formPrincipal.UsuarioId;
-
-                                if (esValido && userid > 0)
-                                {
-                                    string gruposData = _formPrincipal.ObtenerInformacionGrupo(userid);
-                                    string mensajesRecientes = _formPrincipal.ObtenerMensajesRecientes(userid);
-
-                                    string respuesta = $"LOGIN_EXITOSO|{usuario}|{userid}|{gruposData}|{mensajesRecientes}";
-                                    handler.Send(Encoding.UTF8.GetBytes(respuesta + "<EOF>"));
-                                }
-                                else
-                                {
-                                    string respuesta = "LOGIN_ERROR|Credenciales incorrectas";
-                                    handler.Send(Encoding.UTF8.GetBytes(respuesta + "<EOF>"));
-                                }
-
-                            }
-                            else if (data.Contains("REGISTER|"))
-                            {
-                                string mensajeLimpio = data.Replace("<EOF>", "");
-                                string[] partes = mensajeLimpio.Split('|');
-                                string usuario = partes[1];
-                                string password = partes[2];
-                                int id = _formPrincipal.UsuarioId;
-
-                                bool exito = _formPrincipal.registrarUsuario(usuario, password);
-                                string respuesta = exito ?
-                                    "LOGIN_EXITOSO|Bienvenido" :
-                                    "LOGIN_ERROR|Credenciales incorrectas";
-                                handler.Send(Encoding.UTF8.GetBytes(respuesta + "|" + usuario + "|" + id + "<EOF>"));
-                            }
-
-                            //no necesitabamos el evento para el historial lol podemos reutilizar esto
-                            else if (data.Contains("RECENTS|"))
-                            {
-                                string mensajeLimpio = data.Replace("<EOF>", "");
-                                string[] partes = mensajeLimpio.Split('|');
-                                string usuario = partes[1];
-                                int userid = int.Parse(partes[2]);
-                                string nombreGrupo = partes[3];
-                                string descripcion = partes[4];
-                                string usuariosTexto = partes[5];
-
-                                bool exito = _formPrincipal.Crear_grupo(usuario, userid, nombreGrupo, descripcion, usuariosTexto);
-                                //esto es una mezcla de cosas, no es nada :p
-                            }
-
-
-                                //MessageBox.Show($"Mensaje recibido: {data.Replace("<EOF>", "")}");
+                            // ✅ Manejar cada cliente en un hilo separado
+                            Task.Run(() => ManejarCliente(handler));
                         }
                     }
                 }
@@ -135,9 +71,116 @@ namespace ChatRoom
                     MessageBox.Show($"Error en servidor: {ex.Message}");
                 }
             }
+
+            // ✅ Nuevo método para manejar clientes en paralelo
+            private void ManejarCliente(Socket handler)
+            {
+                try
+                {
+                    while (handler.Connected)
+                    {
+                        string data = "";
+                        byte[] bytes = new byte[1024];
+
+                        // RECIBIR mensaje
+                        while (true)
+                        {
+                            int bytesRec = handler.Receive(bytes);
+                            data += Encoding.UTF8.GetString(bytes, 0, bytesRec);
+                            if (data.Contains("<EOF>")) break;
+                            if (bytesRec == 0) break; // Cliente desconectado
+                        }
+
+                        if (string.IsNullOrEmpty(data)) break;
+
+                        // PROCESAR según el tipo de evento
+                        if (data.Contains("LOGIN|"))
+                        {
+                            string mensajeLimpio = data.Replace("<EOF>", "");
+                            string[] partes = mensajeLimpio.Split('|');
+                            string usuario = partes[1];
+                            string password = partes[2];
+                            bool esValido = _formPrincipal.validarUsuario(usuario, password);
+                            int userid = _formPrincipal.UsuarioId;
+
+                            if (esValido && userid > 0)
+                            {
+                                string gruposData = _formPrincipal.ObtenerInformacionGrupo(userid);
+                                string mensajesRecientes = _formPrincipal.ObtenerMensajesRecientes(userid);
+
+                                string respuesta = $"LOGIN_EXITOSO|{usuario}|{userid}|{gruposData}|{mensajesRecientes}";
+                                handler.Send(Encoding.UTF8.GetBytes(respuesta + "<EOF>"));
+                            }
+                            else
+                            {
+                                string respuesta = "LOGIN_ERROR|Credenciales incorrectas";
+                                handler.Send(Encoding.UTF8.GetBytes(respuesta + "<EOF>"));
+                            }
+                        }
+                        else if (data.Contains("REGISTER|"))
+                        {
+                            string mensajeLimpio = data.Replace("<EOF>", "");
+                            string[] partes = mensajeLimpio.Split('|');
+                            string usuario = partes[1];
+                            string password = partes[2];
+                            int id = _formPrincipal.UsuarioId;
+
+                            bool exito = _formPrincipal.registrarUsuario(usuario, password);
+                            string respuesta = exito ?
+                                "LOGIN_EXITOSO|Bienvenido" :
+                                "LOGIN_ERROR|Credenciales incorrectas";
+                            handler.Send(Encoding.UTF8.GetBytes(respuesta + "|" + usuario + "|" + id + "<EOF>"));
+                        }
+                        else if (data.Contains("RECENTS|"))
+                        {
+                            string mensajeLimpio = data.Replace("<EOF>", "");
+                            string[] partes = mensajeLimpio.Split('|');
+                            string usuario = partes[1];
+                            int userid = int.Parse(partes[2]);
+                            string nombreGrupo = partes[3];
+                            string descripcion = partes[4];
+                            string usuariosTexto = partes[5];
+
+                            bool exito = _formPrincipal.Crear_grupo(usuario, userid, nombreGrupo, descripcion, usuariosTexto);
+                        }
+                        else if (data.Contains("GET_RECENT_MESSAGES|"))
+                        {
+                            string mensajeLimpio = data.Replace("<EOF>", "");
+                            string[] partes = mensajeLimpio.Split('|');
+                            int salaId = int.Parse(partes[1]);
+
+                            string mensajes = _formPrincipal.ObtenerMensajesRecientes(salaId);
+                            string respuesta = "RECENT_MESSAGES|" + mensajes + "<EOF>";
+
+                            handler.Send(Encoding.UTF8.GetBytes(respuesta));
+
+                            // ✅ Cerrar conexión después de enviar mensajes para liberar el socket
+                            handler.Shutdown(SocketShutdown.Both);
+                            handler.Close();
+                            return; // Salir del bucle para este cliente
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error con cliente: {ex.Message}");
+                }
+                finally
+                {
+                    try
+                    {
+                        if (handler.Connected)
+                        {
+                            handler.Shutdown(SocketShutdown.Both);
+                            handler.Close();
+                        }
+                    }
+                    catch { }
+                }
+            }
         }
 
-        private bool registrarUsuario(string usuario, string pass)
+            private bool registrarUsuario(string usuario, string pass)
         {
             try
             {
@@ -287,20 +330,24 @@ namespace ChatRoom
 
         }
 
-        public string ObtenerMensajesRecientes(int userId)
+        public string ObtenerMensajesRecientes(int salaId)
         {
             try
             {
                 using (MySqlConnection conn = new MySqlConnection(connection))
                 {
                     conn.Open();
+
+                    // Consulta optimizada con parámetros correctos
                     MySqlCommand cmd = new MySqlCommand(@"
                 SELECT m.id_sala, u.nombre_usuario, m.mensajes, m.fecha_envio
                 FROM mensajes m
                 INNER JOIN usuarios u ON m.id_usuario = u.id_usuario
-                WHERE m.id_sala IN (SELECT id_sala FROM miembros_sala WHERE id_usuario = @id)
-                ORDER BY m.fecha_envio DESC LIMIT 10", conn);
-                    cmd.Parameters.AddWithValue("@id", userId);
+                WHERE m.id_sala = @salaId
+                ORDER BY m.fecha_envio DESC 
+                LIMIT 50", conn);
+
+                    cmd.Parameters.AddWithValue("@salaId", salaId);
 
                     MySqlDataReader reader = cmd.ExecuteReader();
                     List<string> mensajes = new List<string>();
@@ -312,7 +359,7 @@ namespace ChatRoom
                     }
                     reader.Close();
 
-                    return string.Join(";", mensajes); // Formato: "1:ana:Hola!:2024-01-01;2:pedro:Reunión mañana:2024-01-01"
+                    return string.Join(";", mensajes);
                 }
             }
             catch (Exception ex)
