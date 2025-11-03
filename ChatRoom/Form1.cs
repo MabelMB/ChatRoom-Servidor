@@ -106,9 +106,8 @@ namespace ChatRoom
                             if (esValido && userid > 0)
                             {
                                 string gruposData = _formPrincipal.ObtenerInformacionGrupo(userid);
-                                string mensajesRecientes = _formPrincipal.ObtenerMensajesRecientes(userid);
-            
-                                string respuesta = $"LOGIN_EXITOSO|{usuario}|{userid}|{gruposData}|{mensajesRecientes}";
+                                
+                                string respuesta = $"LOGIN_EXITOSO|{usuario}|{userid}|{gruposData}";
                                 handler.Send(Encoding.UTF8.GetBytes(respuesta + "<EOF>"));
                             }
                             else
@@ -379,7 +378,7 @@ namespace ChatRoom
                     }
                     reader.Close();
 
-                    return string.Join("-", mensajes);
+                    return string.Join(";", mensajes);
                 }
             }
             catch (Exception ex)
