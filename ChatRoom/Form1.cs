@@ -1,4 +1,5 @@
 ﻿using MySql.Data.MySqlClient;
+using MySqlConnector;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -21,6 +22,7 @@ namespace ChatRoom
         private ServerSocket server;
         private STARTMENU formPrincipal;
         int UsuarioId;
+        
 
         public STARTMENU()
         {
@@ -28,6 +30,7 @@ namespace ChatRoom
             this.DoubleBuffered = true;
             ServerSocket servidor = new ServerSocket(this);
             Task.Run(() => servidor.RecibirMensaje());
+            f.Close();
 
         }
 
@@ -35,6 +38,7 @@ namespace ChatRoom
         {
             private Socket listener;
             private STARTMENU _formPrincipal;
+            
 
             public ServerSocket(STARTMENU formPrincipal)
             {
@@ -779,6 +783,11 @@ namespace ChatRoom
                 passwordlogin.UseSystemPasswordChar = false;
                 passwordlogin.PasswordChar = '\0';
             }
+        }
+
+        private void pictureBox1_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }

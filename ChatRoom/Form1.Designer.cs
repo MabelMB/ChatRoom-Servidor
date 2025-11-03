@@ -65,7 +65,6 @@
             this.startmenulayout.Controls.Add(this.exitbutton, 0, 5);
             this.startmenulayout.Dock = System.Windows.Forms.DockStyle.Fill;
             this.startmenulayout.Location = new System.Drawing.Point(0, 0);
-            this.startmenulayout.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.startmenulayout.Name = "startmenulayout";
             this.startmenulayout.RowCount = 7;
             this.startmenulayout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 43.26619F));
@@ -75,7 +74,7 @@
             this.startmenulayout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 5.381295F));
             this.startmenulayout.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.startmenulayout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 45.97122F));
-            this.startmenulayout.Size = new System.Drawing.Size(900, 562);
+            this.startmenulayout.Size = new System.Drawing.Size(800, 450);
             this.startmenulayout.TabIndex = 0;
             this.startmenulayout.Visible = false;
             this.startmenulayout.Paint += new System.Windows.Forms.PaintEventHandler(this.tableLayoutPanel1_Paint);
@@ -84,10 +83,9 @@
             // 
             this.MainLogo.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.MainLogo.Image = global::ChatRoom.Properties.Resources.image_removebg_preview__3_;
-            this.MainLogo.Location = new System.Drawing.Point(3, 4);
-            this.MainLogo.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.MainLogo.Location = new System.Drawing.Point(3, 3);
             this.MainLogo.Name = "MainLogo";
-            this.MainLogo.Size = new System.Drawing.Size(893, 187);
+            this.MainLogo.Size = new System.Drawing.Size(794, 150);
             this.MainLogo.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.MainLogo.TabIndex = 2;
             this.MainLogo.TabStop = false;
@@ -95,10 +93,9 @@
             // loginButton
             // 
             this.loginButton.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.loginButton.Location = new System.Drawing.Point(336, 199);
-            this.loginButton.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.loginButton.Location = new System.Drawing.Point(298, 160);
             this.loginButton.Name = "loginButton";
-            this.loginButton.Size = new System.Drawing.Size(228, 29);
+            this.loginButton.Size = new System.Drawing.Size(203, 23);
             this.loginButton.TabIndex = 0;
             this.loginButton.Text = "Iniciar sesión";
             this.loginButton.UseVisualStyleBackColor = true;
@@ -107,10 +104,9 @@
             // registerButton
             // 
             this.registerButton.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.registerButton.Location = new System.Drawing.Point(333, 260);
-            this.registerButton.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.registerButton.Location = new System.Drawing.Point(296, 208);
             this.registerButton.Name = "registerButton";
-            this.registerButton.Size = new System.Drawing.Size(233, 29);
+            this.registerButton.Size = new System.Drawing.Size(207, 23);
             this.registerButton.TabIndex = 1;
             this.registerButton.Text = "Registrar nueva cuenta";
             this.registerButton.UseVisualStyleBackColor = true;
@@ -119,10 +115,9 @@
             // exitbutton
             // 
             this.exitbutton.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.exitbutton.Location = new System.Drawing.Point(333, 321);
-            this.exitbutton.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.exitbutton.Location = new System.Drawing.Point(296, 256);
             this.exitbutton.Name = "exitbutton";
-            this.exitbutton.Size = new System.Drawing.Size(233, 29);
+            this.exitbutton.Size = new System.Drawing.Size(207, 23);
             this.exitbutton.TabIndex = 3;
             this.exitbutton.Text = "Salir";
             this.exitbutton.UseVisualStyleBackColor = true;
@@ -140,7 +135,6 @@
             this.loginmenulayout.Controls.Add(this.loginBackButton, 0, 6);
             this.loginmenulayout.Dock = System.Windows.Forms.DockStyle.Fill;
             this.loginmenulayout.Location = new System.Drawing.Point(0, 0);
-            this.loginmenulayout.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.loginmenulayout.Name = "loginmenulayout";
             this.loginmenulayout.RowCount = 8;
             this.loginmenulayout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 42.95168F));
@@ -151,7 +145,7 @@
             this.loginmenulayout.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.loginmenulayout.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.loginmenulayout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 46.97968F));
-            this.loginmenulayout.Size = new System.Drawing.Size(900, 562);
+            this.loginmenulayout.Size = new System.Drawing.Size(800, 450);
             this.loginmenulayout.TabIndex = 3;
             this.loginmenulayout.Visible = false;
             // 
@@ -159,22 +153,21 @@
             // 
             this.pictureBox1.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.pictureBox1.Image = global::ChatRoom.Properties.Resources.image_removebg_preview__3_;
-            this.pictureBox1.Location = new System.Drawing.Point(3, 6);
-            this.pictureBox1.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.pictureBox1.Location = new System.Drawing.Point(3, 5);
             this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(893, 168);
+            this.pictureBox1.Size = new System.Drawing.Size(794, 134);
             this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pictureBox1.TabIndex = 2;
             this.pictureBox1.TabStop = false;
+            this.pictureBox1.Click += new System.EventHandler(this.pictureBox1_Click);
             // 
             // userlogin
             // 
             this.userlogin.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.userlogin.ForeColor = System.Drawing.SystemColors.WindowFrame;
-            this.userlogin.Location = new System.Drawing.Point(359, 184);
-            this.userlogin.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.userlogin.Location = new System.Drawing.Point(319, 147);
             this.userlogin.Name = "userlogin";
-            this.userlogin.Size = new System.Drawing.Size(182, 26);
+            this.userlogin.Size = new System.Drawing.Size(162, 22);
             this.userlogin.TabIndex = 3;
             this.userlogin.Text = "Usuario";
             this.userlogin.TextChanged += new System.EventHandler(this.userlogin_TextChanged);
@@ -185,10 +178,9 @@
             // 
             this.passwordlogin.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.passwordlogin.ForeColor = System.Drawing.SystemColors.WindowFrame;
-            this.passwordlogin.Location = new System.Drawing.Point(361, 240);
-            this.passwordlogin.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.passwordlogin.Location = new System.Drawing.Point(321, 193);
             this.passwordlogin.Name = "passwordlogin";
-            this.passwordlogin.Size = new System.Drawing.Size(177, 26);
+            this.passwordlogin.Size = new System.Drawing.Size(158, 22);
             this.passwordlogin.TabIndex = 4;
             this.passwordlogin.Text = "Contraseña";
             this.passwordlogin.TextChanged += new System.EventHandler(this.passwordlogin_TextChanged);
@@ -198,10 +190,9 @@
             // loginuserbutton
             // 
             this.loginuserbutton.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.loginuserbutton.Location = new System.Drawing.Point(336, 293);
-            this.loginuserbutton.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.loginuserbutton.Location = new System.Drawing.Point(298, 236);
             this.loginuserbutton.Name = "loginuserbutton";
-            this.loginuserbutton.Size = new System.Drawing.Size(228, 29);
+            this.loginuserbutton.Size = new System.Drawing.Size(203, 23);
             this.loginuserbutton.TabIndex = 5;
             this.loginuserbutton.Text = "Iniciar sesión";
             this.loginuserbutton.UseVisualStyleBackColor = true;
@@ -210,10 +201,9 @@
             // loginBackButton
             // 
             this.loginBackButton.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.loginBackButton.Location = new System.Drawing.Point(336, 330);
-            this.loginBackButton.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.loginBackButton.Location = new System.Drawing.Point(298, 265);
             this.loginBackButton.Name = "loginBackButton";
-            this.loginBackButton.Size = new System.Drawing.Size(228, 29);
+            this.loginBackButton.Size = new System.Drawing.Size(203, 23);
             this.loginBackButton.TabIndex = 0;
             this.loginBackButton.Text = "Volver";
             this.loginBackButton.UseVisualStyleBackColor = true;
@@ -232,7 +222,6 @@
             this.registermenulayout.Controls.Add(this.registerbackbutton, 0, 7);
             this.registermenulayout.Dock = System.Windows.Forms.DockStyle.Fill;
             this.registermenulayout.Location = new System.Drawing.Point(0, 0);
-            this.registermenulayout.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.registermenulayout.Name = "registermenulayout";
             this.registermenulayout.RowCount = 9;
             this.registermenulayout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 46.42215F));
@@ -244,7 +233,7 @@
             this.registermenulayout.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.registermenulayout.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.registermenulayout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 42.85466F));
-            this.registermenulayout.Size = new System.Drawing.Size(900, 562);
+            this.registermenulayout.Size = new System.Drawing.Size(800, 450);
             this.registermenulayout.TabIndex = 4;
             this.registermenulayout.Visible = false;
             // 
@@ -252,10 +241,9 @@
             // 
             this.pictureBox2.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.pictureBox2.Image = global::ChatRoom.Properties.Resources.image_removebg_preview__3_;
-            this.pictureBox2.Location = new System.Drawing.Point(3, 7);
-            this.pictureBox2.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.pictureBox2.Location = new System.Drawing.Point(3, 5);
             this.pictureBox2.Name = "pictureBox2";
-            this.pictureBox2.Size = new System.Drawing.Size(893, 164);
+            this.pictureBox2.Size = new System.Drawing.Size(794, 131);
             this.pictureBox2.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pictureBox2.TabIndex = 2;
             this.pictureBox2.TabStop = false;
@@ -264,10 +252,9 @@
             // 
             this.registeruser.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.registeruser.ForeColor = System.Drawing.SystemColors.WindowFrame;
-            this.registeruser.Location = new System.Drawing.Point(339, 183);
-            this.registeruser.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.registeruser.Location = new System.Drawing.Point(301, 145);
             this.registeruser.Name = "registeruser";
-            this.registeruser.Size = new System.Drawing.Size(222, 26);
+            this.registeruser.Size = new System.Drawing.Size(198, 22);
             this.registeruser.TabIndex = 3;
             this.registeruser.Text = "Usuario";
             this.registeruser.TextChanged += new System.EventHandler(this.registeruser_TextChanged);
@@ -278,10 +265,9 @@
             // 
             this.registerpassword.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.registerpassword.ForeColor = System.Drawing.SystemColors.WindowFrame;
-            this.registerpassword.Location = new System.Drawing.Point(339, 237);
-            this.registerpassword.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.registerpassword.Location = new System.Drawing.Point(301, 189);
             this.registerpassword.Name = "registerpassword";
-            this.registerpassword.Size = new System.Drawing.Size(221, 26);
+            this.registerpassword.Size = new System.Drawing.Size(197, 22);
             this.registerpassword.TabIndex = 6;
             this.registerpassword.Text = "Contraseña";
             this.registerpassword.TextChanged += new System.EventHandler(this.registerpassword_TextChanged);
@@ -292,10 +278,9 @@
             // 
             this.confirmpassword.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.confirmpassword.ForeColor = System.Drawing.SystemColors.WindowFrame;
-            this.confirmpassword.Location = new System.Drawing.Point(339, 271);
-            this.confirmpassword.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.confirmpassword.Location = new System.Drawing.Point(301, 217);
             this.confirmpassword.Name = "confirmpassword";
-            this.confirmpassword.Size = new System.Drawing.Size(221, 26);
+            this.confirmpassword.Size = new System.Drawing.Size(197, 22);
             this.confirmpassword.TabIndex = 7;
             this.confirmpassword.Text = "Confirmar contraseña";
             this.confirmpassword.TextChanged += new System.EventHandler(this.confirmpassword_TextChanged);
@@ -305,10 +290,9 @@
             // registeruserbutton
             // 
             this.registeruserbutton.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.registeruserbutton.Location = new System.Drawing.Point(336, 325);
-            this.registeruserbutton.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.registeruserbutton.Location = new System.Drawing.Point(298, 261);
             this.registeruserbutton.Name = "registeruserbutton";
-            this.registeruserbutton.Size = new System.Drawing.Size(228, 29);
+            this.registeruserbutton.Size = new System.Drawing.Size(203, 23);
             this.registeruserbutton.TabIndex = 5;
             this.registeruserbutton.Text = "Registrar";
             this.registeruserbutton.UseVisualStyleBackColor = true;
@@ -317,10 +301,9 @@
             // registerbackbutton
             // 
             this.registerbackbutton.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.registerbackbutton.Location = new System.Drawing.Point(336, 362);
-            this.registerbackbutton.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.registerbackbutton.Location = new System.Drawing.Point(298, 290);
             this.registerbackbutton.Name = "registerbackbutton";
-            this.registerbackbutton.Size = new System.Drawing.Size(228, 29);
+            this.registerbackbutton.Size = new System.Drawing.Size(203, 23);
             this.registerbackbutton.TabIndex = 0;
             this.registerbackbutton.Text = "Volver";
             this.registerbackbutton.UseVisualStyleBackColor = true;
@@ -328,13 +311,12 @@
             // 
             // STARTMENU
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(900, 562);
+            this.ClientSize = new System.Drawing.Size(800, 450);
             this.Controls.Add(this.loginmenulayout);
             this.Controls.Add(this.registermenulayout);
             this.Controls.Add(this.startmenulayout);
-            this.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.Name = "STARTMENU";
             this.Text = "ChatRoom (Beta)";
             this.Load += new System.EventHandler(this.Inicio_Load);
