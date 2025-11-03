@@ -220,7 +220,7 @@ namespace ChatRoom
 
             //IMPORTANT -+-+-+-+-+-+-*_*_*_*_*_+-+-+-+-+_*_*_*_*_*-+-+-+-+_**_*_*-+
             cargaMensajes(id);
-            muestraMiembros(id);
+            //muestraMiembros(id);
             
             chatLayout.Visible = true;
             chatLayout.BringToFront();
@@ -353,90 +353,15 @@ namespace ChatRoom
                 if (!esCreador)
                 {
                     string rol = "miembro";
-                    agregaMiembro(userid, Reader.GetInt32("id_sala"), rol);
+                    //agregaMiembro(userid, Reader.GetInt32("id_sala"), rol);
                 }
             }
             Reader.Close();
         }
         //Carga de los miembros del grupo
-        private void muestraMiembros(int salaid)
-        {
-            MySqlConnection conn = new MySqlConnection(connection);
-            conn.Open();
-            MySqlCommand cmd = new MySqlCommand("SELECT u.id_usuario, u.nombre_usuario FROM miembros_sala ms INNER JOIN usuarios u ON ms.id_usuario = u.id_usuario WHERE ms.id_sala = @sala", conn);
-            cmd.Parameters.AddWithValue("@sala", salaid);
+        
 
-            MySqlDataReader Reader = cmd.ExecuteReader();
-
-            List<string> miembros = new List<string>();
-
-            while (Reader.Read()) {
-                miembros.Add(Reader.GetString("nombre_usuario"));
-            }
-            groupmemberslabel.Text = string.Join(", ", miembros);
-        }
-
-        private void agregaMiembro(int userid, int salaid, string rol) {
-
-
-            MySqlConnection conn = new MySqlConnection(connection);
-            conn.Open();
-
-            MySqlCommand verificar = new MySqlCommand("SELECT COUNT(*) FROM miembros_sala WHERE id_usuario = @us AND id_sala = @sala", conn);
-            verificar.Parameters.AddWithValue("@us", userid);
-            verificar.Parameters.AddWithValue("@sala", salaid);
-
-            int existe = Convert.ToInt32(verificar.ExecuteScalar());
-
-
-            if (existe == 0)
-            {
-                MySqlCommand cmd = new MySqlCommand("INSERT INTO miembros_sala (id_usuario, id_sala, rol) VALUES (@us, @sala, @rol)", conn);
-                cmd.Parameters.AddWithValue("@us", userid);
-                cmd.Parameters.AddWithValue("@sala", salaid);
-                cmd.Parameters.AddWithValue("@rol", rol);
-
-                cmd.ExecuteNonQuery();
-            }
-        }
-
-        private void agregaMiembroLista(string user, int salaid, string rol)
-        {
-            try
-            {
-                using (MySqlConnection conn = new MySqlConnection(connection))
-                {
-                    conn.Open();
-
-                    MySqlCommand obtenerIdCmd = new MySqlCommand("SELECT id_usuario FROM usuarios WHERE nombre_usuario = @nombre", conn);
-                    obtenerIdCmd.Parameters.AddWithValue("@nombre", user);
-
-                    object resultado = obtenerIdCmd.ExecuteScalar();
-                    if (resultado != null)
-                    {
-                        int userId = Convert.ToInt32(resultado);
-
-                        MySqlCommand cmd = new MySqlCommand("INSERT INTO miembros_sala (id_usuario, id_sala, rol) VALUES (@us, @sala, @rol)", conn);
-                        cmd.Parameters.AddWithValue("@us", userId);
-                        cmd.Parameters.AddWithValue("@sala", salaid);
-                        cmd.Parameters.AddWithValue("@rol", rol);
-
-                        cmd.ExecuteNonQuery();
-                        MessageBox.Show("El usuario se agregó con éxito");
-                    }
-                    else
-                    {
-                        MessageBox.Show("El usuario no existe");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                // Si falla, simplemente continuamos
-                Console.WriteLine($"Error al agregar {user}: {ex.Message}");
-            }
-        }
-
+       
 
         //Carga de usuarios disponibles para agregar al grupo
         private List<string> ObtenerUsuariosDisponibles(int idSala)
@@ -843,7 +768,7 @@ namespace ChatRoom
                     string usuarioLimpio = usuario.Trim();
                     if (!string.IsNullOrWhiteSpace(usuarioLimpio))
                     {
-                        agregaMiembroLista(usuarioLimpio, currentsalaid, "miembro");
+                        //agregaMiembroLista(usuarioLimpio, currentsalaid, "miembro");
                     }
                 }
             }

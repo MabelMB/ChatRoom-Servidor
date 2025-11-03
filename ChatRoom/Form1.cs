@@ -57,11 +57,11 @@ namespace ChatRoom
 
                         while (true)
                         {
-                            // ✅ Aceptar nueva conexión para cada cliente
+                            // Aceptar nueva conexión para cada cliente
                             Socket handler = listener.Accept();
                             //MessageBox.Show("Cliente conectado!");
 
-                            // ✅ Manejar cada cliente en un hilo separado
+                            // Manejar cada cliente en un hilo separado
                             Task.Run(() => ManejarCliente(handler));
                         }
                     }
@@ -72,7 +72,7 @@ namespace ChatRoom
                 }
             }
 
-            // ✅ Nuevo método para manejar clientes en paralelo
+            // Nuevo método para manejar clientes en paralelo
             private void ManejarCliente(Socket handler)
             {
                 try
@@ -107,7 +107,7 @@ namespace ChatRoom
                             {
                                 string gruposData = _formPrincipal.ObtenerInformacionGrupo(userid);
                                 string mensajesRecientes = _formPrincipal.ObtenerMensajesRecientes(userid);
-
+            
                                 string respuesta = $"LOGIN_EXITOSO|{usuario}|{userid}|{gruposData}|{mensajesRecientes}";
                                 handler.Send(Encoding.UTF8.GetBytes(respuesta + "<EOF>"));
                             }
@@ -131,7 +131,7 @@ namespace ChatRoom
                                 "LOGIN_ERROR|Credenciales incorrectas";
                             handler.Send(Encoding.UTF8.GetBytes(respuesta + "|" + usuario + "|" + id + "<EOF>"));
                         }
-                        else if (data.Contains("RECENTS|"))
+                        else if (data.Contains("CREATE_GROUP|"))
                         {
                             string mensajeLimpio = data.Replace("<EOF>", "");
                             string[] partes = mensajeLimpio.Split('|');
@@ -141,7 +141,13 @@ namespace ChatRoom
                             string descripcion = partes[4];
                             string usuariosTexto = partes[5];
 
-                            bool exito = _formPrincipal.Crear_grupo(usuario, userid, nombreGrupo, descripcion, usuariosTexto);
+                            int idsala = _formPrincipal.Crear_grupo(usuario, userid, nombreGrupo, descripcion, usuariosTexto);
+
+                            if (idsala != -1)
+                            {
+                                string respuesta = "GROUP_CREATED";
+                                handler.Send(Encoding.UTF8.GetBytes(respuesta + "|" + idsala));
+                            }
                         }
                         else if (data.Contains("GET_RECENT_MESSAGES|"))
                         {
@@ -154,10 +160,23 @@ namespace ChatRoom
 
                             handler.Send(Encoding.UTF8.GetBytes(respuesta));
 
-                            // ✅ Cerrar conexión después de enviar mensajes para liberar el socket
+                            // Cerrar conexión después de enviar mensajes para liberar el socket
                             handler.Shutdown(SocketShutdown.Both);
                             handler.Close();
                             return; // Salir del bucle para este cliente
+                        }
+                        else if (data.Contains("GET_MEMBERS|"))
+                        {
+                            string mensajeLimpio = data.Replace("<EOF>", "");
+                            string[] partes = mensajeLimpio.Split('|');
+                            int salaId = int.Parse(partes[1]);
+                            string miembros = _formPrincipal.muestraMiembros(salaId);
+                            string respuesta = $"MEMBERS_DATA|{salaId}|{miembros}";
+                            handler.Send(Encoding.UTF8.GetBytes(respuesta + "<EOF>"));
+
+                            handler.Shutdown(SocketShutdown.Both);
+                            handler.Close();
+                            return;
                         }
                     }
                 }
@@ -247,7 +266,7 @@ namespace ChatRoom
         }
 
 
-        private bool Crear_grupo(string username, int userid, string nombreGrupo, string descripcionGrupo, string usuariosTexto)
+        private int Crear_grupo(string username, int userid, string nombreGrupo, string descripcionGrupo, string usuariosTexto)
         {
             try
             {
@@ -280,12 +299,13 @@ namespace ChatRoom
                 }
 
                 agregaMiembro(userid, id, "admin");
-                return true;
+                return id;
+                
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Error al crear el grupo: " + ex.Message);
-                return false;
+                return -1;
             }
         }
 
@@ -319,7 +339,7 @@ namespace ChatRoom
                     reader.Close();
 
                     return string.Join(";", grupos);
-                    // Formato: "1:Amigos:Grupo de amigos:admin;2:Trabajo:Grupo del trabajo:miembro"
+                    // Formato: "1:Amigos:Grupo de amigos:admin;2:Trabajo:Grupo del trabajo:miembro:ana-pedro-carlos;"
                 }
             }
             catch (Exception ex)
@@ -359,7 +379,7 @@ namespace ChatRoom
                     }
                     reader.Close();
 
-                    return string.Join(";", mensajes);
+                    return string.Join("-", mensajes);
                 }
             }
             catch (Exception ex)
@@ -367,6 +387,24 @@ namespace ChatRoom
                 MessageBox.Show($"Error obteniendo mensajes: {ex.Message}");
                 return "";
             }
+        }
+
+        private string muestraMiembros(int salaid)
+        {
+            MySqlConnection conn = new MySqlConnection(connection);
+            conn.Open();
+            MySqlCommand cmd = new MySqlCommand("SELECT u.id_usuario, u.nombre_usuario FROM miembros_sala ms INNER JOIN usuarios u ON ms.id_usuario = u.id_usuario WHERE ms.id_sala = @sala", conn);
+            cmd.Parameters.AddWithValue("@sala", salaid);
+
+            MySqlDataReader Reader = cmd.ExecuteReader();
+
+            List<string> miembros = new List<string>();
+
+            while (Reader.Read())
+            {
+                miembros.Add(Reader.GetString("nombre_usuario"));
+            }
+            return string.Join(";", miembros);
         }
 
         private void agregaMiembro(int userid, int salaid, string rol)
