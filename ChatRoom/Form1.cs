@@ -1,5 +1,5 @@
 ﻿using MySql.Data.MySqlClient;
-using MySqlConnector;
+//using MySqlConnector;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -30,7 +30,7 @@ namespace ChatRoom
             this.DoubleBuffered = true;
             ServerSocket servidor = new ServerSocket(this);
             Task.Run(() => servidor.RecibirMensaje());
-            f.Close();
+            //f.Close();
 
         }
 
@@ -181,6 +181,19 @@ namespace ChatRoom
                             handler.Close();
                             return;
                         }
+                        else if (data.Contains("DELETE_GROUP|"))
+                        {
+                            string mensajeLimpio = data.Replace("<EOF>", "");
+                            string[] partes = mensajeLimpio.Split('|');
+                            int salaid = int.Parse(partes[1]);
+                            int userid = int.Parse(partes[2]);
+
+                            bool exito = _formPrincipal.delete_group(salaid, userid);
+                            string respuesta = exito ?
+                                "DELETE_EXITOSO" :
+                                "DELETE_FALLO";
+                            handler.Send(Encoding.UTF8.GetBytes(respuesta + "<EOF>"));
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -320,15 +333,15 @@ namespace ChatRoom
                 {
                     conn.Open();
                     MySqlCommand cmd = new MySqlCommand(@"
-                SELECT s.id_sala, s.nombre_sala, s.descripcion, 
-                       CASE 
-                           WHEN s.id_creador = @id THEN 'admin'
-                           ELSE COALESCE(ms.rol, 'miembro') 
-                       END as rol
-                FROM salas s 
-                LEFT JOIN miembros_sala ms ON s.id_sala = ms.id_sala AND ms.id_usuario = @id
-                WHERE s.id_creador = @id 
-                   OR s.id_sala IN (SELECT id_sala FROM miembros_sala WHERE id_usuario = @id)", conn);
+                    SELECT s.id_sala, s.nombre_sala, s.descripcion,
+                           CASE 
+                               WHEN s.id_creador = @id THEN 'admin'
+                               ELSE COALESCE(ms.rol, 'miembro') 
+                           END as rol
+                    FROM salas s
+                    INNER JOIN miembros_sala ms ON s.id_sala = ms.id_sala
+                    WHERE ms.id_usuario = @id;", conn);
+
                     cmd.Parameters.AddWithValue("@id", userid);
 
                     MySqlDataReader reader = cmd.ExecuteReader();
@@ -470,7 +483,35 @@ namespace ChatRoom
             }
         }
 
+        private bool delete_group(int salaid, int userid)
+        {
+            MessageBox.Show($"Intentando eliminar: sala={salaid}, usuario={userid}");
 
+            try
+            {
+                using (MySqlConnection conn = new MySqlConnection(connection))
+                {
+                    conn.Open();
+
+                    // Solo eliminar este usuario de la sala
+                    MySqlCommand cmd = new MySqlCommand(
+                        "DELETE FROM miembros_sala WHERE id_sala = @sala AND id_usuario = @user", conn);
+                    cmd.Parameters.AddWithValue("@sala", salaid);
+                    cmd.Parameters.AddWithValue("@user", userid);
+
+                    int filasAfectadas = cmd.ExecuteNonQuery();
+
+                    MessageBox.Show($"BD: Filas afectadas = {filasAfectadas}");
+
+                    return filasAfectadas > 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error BD: {ex.Message}");
+                return false;
+            }
+        }
 
         //DISEÑO -----------------------------------------------------------
         protected override void OnPaint(PaintEventArgs e)
