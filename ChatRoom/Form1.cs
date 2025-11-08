@@ -10,6 +10,7 @@ using System.Runtime.Remoting.Messaging;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static ChatRoom.Form2;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace ChatRoom
@@ -192,6 +193,19 @@ namespace ChatRoom
                             string respuesta = exito ?
                                 "DELETE_EXITOSO" :
                                 "DELETE_FALLO";
+                            handler.Send(Encoding.UTF8.GetBytes(respuesta + "<EOF>"));
+                        }
+                        else if (data.Contains("SEND_MESSAGE|"))
+                        {
+                            string mensajeLimpio = data.Replace("<EOF>", "");
+                            string[] partes = mensajeLimpio.Split('|');
+                            int salaid = int.Parse(partes[1]);
+                            int userid = int.Parse(partes[2]);
+                            string mensaje = partes[3];
+
+                            string message = _formPrincipal.MandarMensajeBD(userid, salaid, mensaje);
+
+                            string respuesta = "MESSAGE_SENT|" + message;
                             handler.Send(Encoding.UTF8.GetBytes(respuesta + "<EOF>"));
                         }
                     }
@@ -512,6 +526,74 @@ namespace ChatRoom
                 return false;
             }
         }
+
+        private string MandarMensajeBD(int userid, int salaid, string mensaje)
+        {
+            
+            try
+            {
+                using (MySqlConnection conn = new MySqlConnection(connection))
+                {
+                    conn.Open();
+                    string query = "INSERT INTO mensajes (id_usuario, id_sala, mensajes, fecha_envio) VALUES (@usuario, @sala, @mensaje, @fecha)";
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@usuario", userid);
+                        cmd.Parameters.AddWithValue("@sala", salaid);
+                        cmd.Parameters.AddWithValue("@mensaje", mensaje);
+                        cmd.Parameters.AddWithValue("@fecha", DateTime.Now);
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+
+                string mensajeConEmojis = EmojiHelper.ConvertEmojis(mensaje);
+                //AddNewMessage(usernamelabel.Text, mensajeConEmojis, true);
+                return mensajeConEmojis;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al enviar el mensaje: " + ex.Message);
+                return "fallo";
+            }
+
+        }
+
+        public static class EmojiHelper
+        {
+            private static Dictionary<string, string> emojiMap = new Dictionary<string, string>()
+            {
+                {  ":)", "😊"},
+                { ":D", "😄" },
+                { ":(", "☹️" },
+                { ";)", "😉" },
+                { ":P", "😛" },
+                { ":O", "😲" },
+                { ":'(", "😢" },
+                { ":|", "😐" },
+                { ":*", "😘" },
+                { "<3", "❤️"  },
+                { ":fire:","🔥"},
+                { ":thumbsup:", "👍" },
+                { ":thumbsdown:", "👎" },
+                { ":ok_hand:", "👌" },
+                { ":clap:", "👏" },
+                { ":wave:", "👋" }
+            };
+
+            public static string ConvertEmojis(string text)
+            {
+                if (string.IsNullOrEmpty(text))
+                    return text;
+
+                string result = text;
+                foreach (var emoji in emojiMap)
+                {
+                    result = result.Replace(emoji.Key, emoji.Value);
+                }
+                return result;
+            }
+        }
+
 
         //DISEÑO -----------------------------------------------------------
         protected override void OnPaint(PaintEventArgs e)

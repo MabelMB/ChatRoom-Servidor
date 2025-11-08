@@ -243,43 +243,12 @@ namespace ChatRoom
         {
             
         }
-        private void delgroupbutton_Click(object sender, EventArgs e)
-        {
-            int targetId = currentuserid;
-
-
-            using (MySqlConnection conn = new MySqlConnection(connection))
-            {
-                conn.Open();
-                MySqlCommand cmd = new MySqlCommand("DELETE FROM miembros_sala WHERE id_sala = @sala AND id_usuario = @user", conn);
-                cmd.Parameters.AddWithValue("@sala", currentuserid);
-                cmd.Parameters.AddWithValue("@user", userid);
-                int filasAfectadas = cmd.ExecuteNonQuery();
-            }
-
-            foreach (Control ctrl in groupViewPanel.Controls)
-            {
-                if (ctrl.Tag is int id && id == targetId)
-                {
-                    groupViewPanel.Controls.Remove(ctrl);
-                    break;
-                }
-            }
-
-            freezescreenpanel.Visible = false;
-            confirmationpanel.Visible = false;
-            mainLayout.BringToFront();
-            chatLayout.Visible = false;
-            chooseagroup.Visible = true;
-            groupconfigpanel.Visible = false;
-            chooseagroup.BringToFront();
-            creategrouppanel.Visible = false;
-        }
-        private void tempaddchatmsg_Click(object sender, EventArgs e)
+        
+       private void tempaddchatmsg_Click(object sender, EventArgs e)
         {
             //AddNewMessage("Alexis", tempmsgtextbox.Text, tempusercheck.Checked ? true : false);
             //IMPORTANT -+-+-+-+-+-+-*_*_*_*_*_+-+-+-+-+_*_*_*_*_*-+-+-+-+_**_*_*-+
-            MandarMensajeBD(tempmsgtextbox.Text);
+            //MandarMensajeBD(tempmsgtextbox.Text);
         }
         private void confirmcancel_Click(object sender, EventArgs e)
         {
@@ -303,61 +272,9 @@ namespace ChatRoom
         //CARGA DE DATOS DEL USUARIO -----------------------------------------------------------
 
         //Carga del nombre de usuario
-        private void MuestraUsuario(int userid, string username)
-        {
-            MySqlConnection conn = new MySqlConnection(connection);
-            conn.Open();
-            MySqlCommand cmd = new MySqlCommand("SELECT * FROM usuarios WHERE id_usuario = @id", conn);
-            cmd.Parameters.AddWithValue("@id", userid);
+        
 
-            MySqlDataReader Reader = cmd.ExecuteReader();
-            if (Reader.Read())
-            {
-                this.usernamelabel.Text = Reader.GetString("nombre_usuario");
-            }
-
-        }
-
-        //Carga de los grupos del usuario
-        private void MuestraGrupos(int userid)
-        {
-            MySqlConnection conn = new MySqlConnection(connection);
-            conn.Open();
-
-            // CONSULTA CORREGIDA - Buscar salas donde el usuario es CREADOR O MIEMBRO
-            MySqlCommand cmd = new MySqlCommand(@"
-        SELECT s.*, 
-               CASE 
-                   WHEN s.id_creador = @id THEN 'creador'
-                   ELSE 'miembro' 
-               END as tipo_miembro
-        FROM salas s
-        WHERE s.id_creador = @id 
-           OR s.id_sala IN (SELECT id_sala FROM miembros_sala WHERE id_usuario = @id)",
-                conn);
-
-            cmd.Parameters.AddWithValue("@id", userid);
-            MySqlDataReader Reader = cmd.ExecuteReader();
-
-            while (Reader.Read())
-            {
-                string tipoMiembro = Reader.GetString("tipo_miembro");
-                bool esCreador = (tipoMiembro == "creador");
-
-                AddNewGroup(Reader.GetString("nombre_sala"),
-                           Reader.GetString("descripcion"),
-                           Reader.GetInt32("id_sala"),
-                           esCreador);
-
-                // Si no es creador, asegurar que esté en miembros_sala
-                if (!esCreador)
-                {
-                    string rol = "miembro";
-                    //agregaMiembro(userid, Reader.GetInt32("id_sala"), rol);
-                }
-            }
-            Reader.Close();
-        }
+       
         //Carga de los miembros del grupo
         
 
@@ -400,7 +317,7 @@ namespace ChatRoom
 
         private void AddNewMessage(string username, string message, bool usergroup)
         {
-            string convertedMessage = EmojiHelper.ConvertEmojis(message);
+            //string convertedMessage = EmojiHelper.ConvertEmojis(message);
 
             // Main message panel
             Panel panel = new Panel();
@@ -571,45 +488,15 @@ namespace ChatRoom
                     string message = reader.GetString("mensajes");
                     int idUsuarioMensaje = reader.GetInt32("id_usuario");
                     bool usergroup = (idUsuarioMensaje == userid);
-                    string messageWithEmojis = EmojiHelper.ConvertEmojis(message);
-                    AddNewMessage(username, messageWithEmojis, usergroup);
+                    //string messageWithEmojis = EmojiHelper.ConvertEmojis(message);
+                    //AddNewMessage(username, messageWithEmojis, usergroup);
 
 
                 }
 
             }
         }
-        private void MandarMensajeBD(string mensaje)
-        {
-            if (string.IsNullOrWhiteSpace(mensaje) || currentuserid == 0)
-                return;
-
-            try
-            {
-                using (MySqlConnection conn = new MySqlConnection(connection))
-                {
-                    conn.Open();
-                    string query = "INSERT INTO mensajes (id_usuario, id_sala, mensajes, fecha_envio) VALUES (@usuario, @sala, @mensaje, @fecha)";
-                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@usuario", userid);
-                        cmd.Parameters.AddWithValue("@sala", currentuserid);
-                        cmd.Parameters.AddWithValue("@mensaje", mensaje);
-                        cmd.Parameters.AddWithValue("@fecha", DateTime.Now);
-                        cmd.ExecuteNonQuery();
-                    }
-                }
-
-                string mensajeConEmojis = EmojiHelper.ConvertEmojis(mensaje);
-                AddNewMessage(usernamelabel.Text, mensajeConEmojis, true);
-
-                tempmsgtextbox.Clear();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error al enviar el mensaje: " + ex.Message);
-            }
-        }
+        
         private bool UsuarioExisteEnGrupo(string nombreUsuario, int salaId)
         {
             try
@@ -640,41 +527,6 @@ namespace ChatRoom
 
 
         //IMPLEMENTACION DE EMOJIS -----------------------------------------------------------
-        public static class EmojiHelper
-        {
-            private static Dictionary<string, string> emojiMap = new Dictionary<string, string>()
-            {
-                {  ":)", "😊"},
-                { ":D", "😄" },
-                { ":(", "☹️" },
-                { ";)", "😉" },
-                { ":P", "😛" },
-                { ":O", "😲" },
-                { ":'(", "😢" },
-                { ":|", "😐" },
-                { ":*", "😘" },
-                { "<3", "❤️"  },
-                { ":fire:","🔥"},
-                { ":thumbsup:", "👍" },
-                { ":thumbsdown:", "👎" },
-                { ":ok_hand:", "👌" },
-                { ":clap:", "👏" },
-                { ":wave:", "👋" }
-            };
-
-            public static string ConvertEmojis(string text)
-            {
-                if (string.IsNullOrEmpty(text))
-                    return text;
-
-                string result = text;
-                foreach (var emoji in emojiMap)
-                {
-                    result = result.Replace(emoji.Key, emoji.Value);
-                }
-                return result;
-            }
-        }
         
 
 

@@ -183,7 +183,7 @@
             this.delgroupbutton.TabIndex = 0;
             this.delgroupbutton.Text = "Salir del grupo";
             this.delgroupbutton.UseVisualStyleBackColor = true;
-            this.delgroupbutton.Click += new System.EventHandler(this.delgroupbutton_Click);
+            //this.delgroupbutton.Click += new System.EventHandler(this.delgroupbutton_Click);
             // 
             // configtitlelabel
             // 
