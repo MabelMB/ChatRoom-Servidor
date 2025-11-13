@@ -39,16 +39,86 @@ namespace ChatRoom
         {
             private Socket listener;
             private STARTMENU _formPrincipal;
-            
+
+            //Lista de clientes conectados
+            private static List<Socket> clientesConectados = new List<Socket>();
+            private static object lockClientes = new object();
 
             public ServerSocket(STARTMENU formPrincipal)
             {
                 _formPrincipal = formPrincipal;
             }
 
+            //agregar cliente a la lista de conectados
+            private void AgregarCliente(Socket cliente)
+            {
+                lock (lockClientes)
+                {
+                    if (!clientesConectados.Contains(cliente))
+                    {
+                        clientesConectados.Add(cliente);
+                        Console.WriteLine($"[DEBUG] Cliente agregado. Total: {clientesConectados.Count}");
+                    }
+                }
+            }
+
+            //remover cliente de la lista de conectados
+            private void RemoverCliente(Socket cliente)
+            {
+                lock (lockClientes)
+                {
+                    if (clientesConectados.Contains(cliente))
+                    {
+                        clientesConectados.Remove(cliente);
+                        Console.WriteLine($"[DEBUG] Cliente removido. Total: {clientesConectados.Count}");
+                    }
+                }
+            }
+
+            //enviar mensaje a todos los clientes conectados :o
+            private void EnviarATodosLosClientes(string mensaje)
+            {
+                List<Socket> clientesAEliminar = new List<Socket>();
+
+                lock (lockClientes)
+                {
+                    foreach (Socket cliente in clientesConectados)
+                    {
+                        try
+                        {
+                            if (cliente.Connected)
+                            {
+                                byte[] datos = Encoding.UTF8.GetBytes(mensaje);
+                                cliente.Send(datos);
+                            }
+                            else
+                            {
+                                clientesAEliminar.Add(cliente);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"[ERROR] No se pudo enviar a cliente: {ex.Message}");
+                            clientesAEliminar.Add(cliente);
+                        }
+                    }
+
+                    // Remover clientes desconectados
+                    foreach (Socket cliente in clientesAEliminar)
+                    {
+                        RemoverCliente(cliente);
+                    }
+                }
+            }
+
+
+
             public void RecibirMensaje()
             {
-                IPAddress ipAddress = IPAddress.Parse("127.0.0.1");
+                //IPAddress ipAddress = IPAddress.Parse("172.17.106.111");
+                //IPEndPoint localEndPoint = new IPEndPoint(ipAddress, 11200);
+
+                IPAddress ipAddress = IPAddress.Any; // ← Escucha en TODAS las interfaces
                 IPEndPoint localEndPoint = new IPEndPoint(ipAddress, 11200);
 
                 try
@@ -80,6 +150,9 @@ namespace ChatRoom
             // Nuevo método para manejar clientes en paralelo
             private void ManejarCliente(Socket handler)
             {
+                //agregar cliente a la lista cuando se conecta
+                AgregarCliente(handler);
+
                 try
                 {
                     while (handler.Connected)
@@ -207,6 +280,26 @@ namespace ChatRoom
 
                             string respuesta = "MESSAGE_SENT|" + message;
                             handler.Send(Encoding.UTF8.GetBytes(respuesta + "<EOF>"));
+
+                            // Notificar a TODOS los clientes sobre el nuevo mensaje
+                            string notificacion = $"NEW_MESSAGE|{salaid}|{userid}|{mensaje}<EOF>";
+                            EnviarATodosLosClientes(notificacion);
+                        }
+                        else if (data.Contains("GET_NEW_MESSAGES|"))
+                        {
+                            string mensajeLimpio = data.Replace("<EOF>", "");
+                            string[] partes = mensajeLimpio.Split('|');
+                            int salaId = int.Parse(partes[1]);
+
+                            // Obtener mensajes recientes (últimos 2 minutos por ejemplo)
+                            string mensajes = _formPrincipal.ObtenerMensajesRecientes(salaId);
+                            string respuesta = "NEW_MESSAGES|" + mensajes + "<EOF>";
+
+                            handler.Send(Encoding.UTF8.GetBytes(respuesta));
+
+                            handler.Shutdown(SocketShutdown.Both);
+                            handler.Close();
+                            return;
                         }
                     }
                 }
@@ -216,6 +309,7 @@ namespace ChatRoom
                 }
                 finally
                 {
+                    RemoverCliente(handler);
                     try
                     {
                         if (handler.Connected)
