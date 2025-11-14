@@ -224,6 +224,9 @@ namespace ChatRoom
                             {
                                 string respuesta = "GROUP_CREATED";
                                 handler.Send(Encoding.UTF8.GetBytes(respuesta + "|" + idsala));
+                                string miembros = _formPrincipal.muestraMiembros(idsala);
+                                string notificacion = $"NEW_GROUP|{idsala}|{nombreGrupo}|{descripcion}|{miembros}<EOF>";
+                                EnviarATodosLosClientes(notificacion);
                             }
                         }
                         else if (data.Contains("GET_RECENT_MESSAGES|"))
@@ -593,8 +596,7 @@ namespace ChatRoom
 
         private bool delete_group(int salaid, int userid)
         {
-            MessageBox.Show($"Intentando eliminar: sala={salaid}, usuario={userid}");
-
+ 
             try
             {
                 using (MySqlConnection conn = new MySqlConnection(connection))
@@ -608,8 +610,6 @@ namespace ChatRoom
                     cmd.Parameters.AddWithValue("@user", userid);
 
                     int filasAfectadas = cmd.ExecuteNonQuery();
-
-                    MessageBox.Show($"BD: Filas afectadas = {filasAfectadas}");
 
                     return filasAfectadas > 0;
                 }

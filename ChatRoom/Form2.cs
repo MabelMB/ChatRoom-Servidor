@@ -274,47 +274,6 @@ namespace ChatRoom
         //Carga del nombre de usuario
         
 
-       
-        //Carga de los miembros del grupo
-        
-
-       
-
-        //Carga de usuarios disponibles para agregar al grupo
-        private List<string> ObtenerUsuariosDisponibles(int idSala)
-        {
-            List<string> usuariosDisponibles = new List<string>();
-
-            try
-            {
-                using (MySqlConnection conn = new MySqlConnection(connection))
-                {
-                    conn.Open();
-
-                    // Consulta para obtener usuarios que NO son miembros y NO son el creador
-                    string query = @" SELECT u.id_usuario, u.nombre_usuario FROM usuarios u WHERE u.id_usuario NOT IN (SELECT id_usuario FROM miembros_sala WHERE id_sala = @salaId)
-                                    AND u.id_usuario NOT IN (SELECT id_creador FROM salas WHERE id_sala = @salaId )";
-
-                    MySqlCommand cmd = new MySqlCommand(query, conn);
-                    cmd.Parameters.AddWithValue("@salaId", idSala);
-
-                    using (MySqlDataReader reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            usuariosDisponibles.Add(reader.GetString("nombre_usuario"));
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error al obtener usuarios disponibles: " + ex.Message);
-            }
-
-            return usuariosDisponibles;
-        }
-
         private void AddNewMessage(string username, string message, bool usergroup)
         {
             //string convertedMessage = EmojiHelper.ConvertEmojis(message);
