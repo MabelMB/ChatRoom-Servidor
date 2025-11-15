@@ -279,13 +279,15 @@ namespace ChatRoom
                             int userid = int.Parse(partes[2]);
                             string mensaje = partes[3];
 
-                            string message = _formPrincipal.MandarMensajeBD(userid, salaid, mensaje);
+                            string message = STARTMENU.EmojiHelper.ConvertEmojis(mensaje);
 
-                            // ← ESTA LÍNEA ES LA QUE AGREGO
-                            message = STARTMENU.EmojiHelper.ConvertEmojis(message);
+                            _formPrincipal.MandarMensajeBD(userid, salaid, message);
+                            //MessageBox.Show(message);
 
+                            string mensajeCodificado = Convert.ToBase64String(Encoding.UTF8.GetBytes(message));
                             string respuesta = "MESSAGE_SENT|" + message;
                             handler.Send(Encoding.UTF8.GetBytes(respuesta + "<EOF>"));
+
 
                             // Notificar a TODOS los clientes
                             string notificacion = $"NEW_MESSAGE|{salaid}|{userid}|{message}<EOF>";
@@ -309,14 +311,14 @@ namespace ChatRoom
                         }
                        else if (data.Contains("SEND_EXISTS"))
                         {
-                            string usuario = data.Replace("SEND_EXISTS|", "").Replace("<EOF>", "");
-                            string[] partes = usuario.Split('|');
-                            int salaId = int.Parse(partes[1]);
 
-                            bool existe = _formPrincipal.UsuarioExisteEnGrupo(usuario, salaId);
-                            string respuesta = existe ?
-                                "USER_EXISTS|true" :
-                                "USER_EXISTS|false";
+                            string mensajeLimpio = data.Replace("<EOF>", "");
+                            string[] partes = mensajeLimpio.Split('|');
+                            string nombreUsuario = partes[1];
+                            int salaId = int.Parse(partes[2]);
+
+                            bool existe = _formPrincipal.UsuarioExisteEnGrupo(nombreUsuario, salaId);
+                            string respuesta = existe ? "USER_EXISTS|true" : "USER_EXISTS|false";
                             handler.Send(Encoding.UTF8.GetBytes(respuesta + "<EOF>"));
                         }
                     }
@@ -1049,4 +1051,6 @@ namespace ChatRoom
 
         }
     }
+
+
 }
