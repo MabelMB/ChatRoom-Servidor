@@ -281,11 +281,14 @@ namespace ChatRoom
 
                             string message = _formPrincipal.MandarMensajeBD(userid, salaid, mensaje);
 
+                            // ← ESTA LÍNEA ES LA QUE AGREGO
+                            message = STARTMENU.EmojiHelper.ConvertEmojis(message);
+
                             string respuesta = "MESSAGE_SENT|" + message;
                             handler.Send(Encoding.UTF8.GetBytes(respuesta + "<EOF>"));
 
-                            // Notificar a TODOS los clientes sobre el nuevo mensaje
-                            string notificacion = $"NEW_MESSAGE|{salaid}|{userid}|{mensaje}<EOF>";
+                            // Notificar a TODOS los clientes
+                            string notificacion = $"NEW_MESSAGE|{salaid}|{userid}|{message}<EOF>";
                             EnviarATodosLosClientes(notificacion);
                         }
                         else if (data.Contains("GET_NEW_MESSAGES|"))
@@ -294,7 +297,7 @@ namespace ChatRoom
                             string[] partes = mensajeLimpio.Split('|');
                             int salaId = int.Parse(partes[1]);
 
-                            // Obtener mensajes recientes (últimos 2 minutos por ejemplo)
+            
                             string mensajes = _formPrincipal.ObtenerMensajesRecientes(salaId);
                             string respuesta = "NEW_MESSAGES|" + mensajes + "<EOF>";
 
@@ -303,6 +306,18 @@ namespace ChatRoom
                             handler.Shutdown(SocketShutdown.Both);
                             handler.Close();
                             return;
+                        }
+                       else if (data.Contains("SEND_EXISTS"))
+                        {
+                            string usuario = data.Replace("SEND_EXISTS|", "").Replace("<EOF>", "");
+                            string[] partes = usuario.Split('|');
+                            int salaId = int.Parse(partes[1]);
+
+                            bool existe = _formPrincipal.UsuarioExisteEnGrupo(usuario, salaId);
+                            string respuesta = existe ?
+                                "USER_EXISTS|true" :
+                                "USER_EXISTS|false";
+                            handler.Send(Encoding.UTF8.GetBytes(respuesta + "<EOF>"));
                         }
                     }
                 }
@@ -356,6 +371,33 @@ namespace ChatRoom
             catch (Exception ex)
             {
                 MessageBox.Show($"Error al registrar usuario: {ex.Message}");
+                return false;
+            }
+        }
+
+        private bool UsuarioExisteEnGrupo(string nombreUsuario, int salaId)
+        {
+            try
+            {
+                using (MySqlConnection conn = new MySqlConnection(connection))
+                {
+                    conn.Open();
+                    string query = @"
+                SELECT COUNT(*) 
+                FROM miembros_sala ms 
+                INNER JOIN usuarios u ON ms.id_usuario = u.id_usuario 
+                WHERE u.nombre_usuario = @usuario AND ms.id_sala = @sala";
+
+                    MySqlCommand cmd = new MySqlCommand(query, conn);
+                    cmd.Parameters.AddWithValue("@usuario", nombreUsuario.TrimStart('@'));
+                    cmd.Parameters.AddWithValue("@sala", salaId);
+
+                    int count = Convert.ToInt32(cmd.ExecuteScalar());
+                    return count > 0;
+                }
+            }
+            catch
+            {
                 return false;
             }
         }
